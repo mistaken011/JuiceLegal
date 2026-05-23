@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juice Legal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SEARCH OVERLAY -->
+<div id="search-overlay" class="search-overlay">
+  <div class="search-box">
+    <div class="search-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Sayfalarda ara..." autocomplete="off" />
+      <button onclick="closeSearch()">✕</button>
+    </div>
+    <div id="search-results" class="search-results"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <span>⚖</span> Juice <span style="color:var(--white)">Legal</span>
+  </div>
+  <div class="nav-links">
+    <a onclick="goPage('hakkimizda')" class="active" id="nav-hakkimizda">Hakkımızda</a>
+    <a onclick="goPage('galeri')" id="nav-galeri">Galeri</a>
+    <a onclick="goPage('departmanlar')" id="nav-departmanlar">Departmanlar</a>
+    <a onclick="goPage('formlar')" id="nav-formlar">Formlar</a>
+    <a onclick="goPage('kurallar')" id="nav-kurallar">Kurallar</a>
+    <a onclick="goPage('hafta')" id="nav-hafta">Haftanın Memuru</a>
+    <a onclick="openSearch()" class="nav-search-btn" title="Ara">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </a>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" id="theme-btn">☀</button>
+    <a onclick="goPage('admin')" class="nav-admin-btn" id="nav-admin">Yönetici</a>
+  </div>
+</nav>
+
+<!-- ========== HAKKIMIZDA ========== -->
+<div id="page-hakkimizda" class="page active">
+  <!-- DUYURU BANDI -->
+  <div id="announcement-bar" class="announcement-bar" style="display:none;">
+    <div class="ann-inner">
+      <span class="ann-icon">📢</span>
+      <span id="ann-text"></span>
+      <button onclick="closeAnnouncement()">✕</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-badge">Juice RP · Legal Departmanı</div>
+    <h1 class="hero-title">JUICE <span class="gold">LEGAL</span></h1>
+    <p class="hero-subtitle">Adalet · Düzen · Hukuk</p>
+    <div class="hero-divider"><span>⚖</span></div>
+    <p class="hero-desc">
+      Juice Legal, Juice RP sunucusunun resmi hukuk departmanıdır.
+      Adaletin salt bir kavram olmadığına, her kararın arkasında titiz bir süreç yürütüldüğüne inanan
+      bir ekip olarak; departmanlarımız, birimlerimiz ve personeliyle 7/24 hukuki düzeni korumak için buradayız.
+      <br><br>
+      Avukatlardan savcılara, hakimlerden idari kadrolara kadar her pozisyonda yetkin personelimiz görev yapmaktadır.
+      Hukuka saygı, protokole bağlılık ve mükemmeliyetçilik — Juice Legal'in değiştirilemez üç temel ilkesidir.
+    </p>
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-num" id="stat-personel">47</span>
+        <span class="stat-label">Aktif Personel</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" id="stat-birim">12</span>
+        <span class="stat-label">Aktif Birim</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" id="stat-dept">5</span>
+        <span class="stat-label">Aktif Departman</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" id="stat-visitors">0</span>
+        <span class="stat-label">Ziyaretçi</span>
+      </div>
+    </div>
+    <a class="apply-btn" href="https://discord.gg/DISCORD_LINKI" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Şimdi Başvur
+    </a>
+    <div class="scroll-hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+      Keşfet
+    </div>
+  </div>
+</div>
+
+<!-- ========== GALERİ ========== -->
+<div id="page-galeri" class="page">
+  <div class="section-hero">
+    <div class="section-tag">Fotoğraflar</div>
+    <h2 class="section-title">GALERİ</h2>
+    <p class="section-desc">Juice Legal departmanından kareler.</p>
+  </div>
+  <div class="galeri-container">
+    <div class="galeri-grid" id="galeri-grid">
+      <div class="galeri-item"><div class="galeri-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Fotoğraf 1</span></div></div>
+      <div class="galeri-item"><div class="galeri-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Fotoğraf 2</span></div></div>
+      <div class="galeri-item"><div class="galeri-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Fotoğraf 3</span></div></div>
+      <div class="galeri-item"><div class="galeri-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Fotoğraf 4</span></div></div>
+      <div class="galeri-item"><div class="galeri-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Fotoğraf 5</span></div></div>
+      <div class="galeri-item"><div class="galeri-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Fotoğraf 6</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DEPARTMANLAR ========== -->
+<div id="page-departmanlar" class="page">
+  <div class="section-hero">
+    <div class="section-tag">Juice RP · Departmanlar</div>
+    <h2 class="section-title">DEPARTMANLAR</h2>
+    <p class="section-desc">Sunucudaki tüm departmanları ve komuta kademelerini keşfedin.</p>
+  </div>
+  <div class="fandom-wrap">
+    <div class="fandom-tabs" id="dept-tabs"></div>
+    <div id="dept-contents"></div>
+  </div>
+</div>
+
+<!-- ========== FORMLAR ========== -->
+<div id="page-formlar" class="page">
+  <div class="section-hero">
+    <div class="section-tag">Resmi Başvurular</div>
+    <h2 class="section-title">FORMLAR</h2>
+    <p class="section-desc">Tüm başvuru ve şikayet formlarını buradan iletebilirsiniz.</p>
+  </div>
+  <div class="forms-container">
+    <div class="form-tabs">
+      <div class="form-tab active" onclick="formTab('legal-sup-basvuru')">Legal Sup Başvurusu</div>
+      <div class="form-tab" onclick="formTab('dept-sikayet')">Departman Şikayet / Öneri</div>
+      <div class="form-tab" onclick="formTab('legal-sup-sikayet')">Legal Sup Şikayet</div>
+    </div>
+    <div id="form-legal-sup-basvuru" class="form-panel active">
+      <div class="form-card">
+        <h3>Legal Sup Başvurusu</h3>
+        <p>Legal Supervisor pozisyonu için resmi başvurunuzu aşağıdaki formu doldurarak yapabilirsiniz.</p>
+        <div id="lsb-success" class="form-success">
+          <div class="check">✅</div>
+          <h4>Başvurunuz Alındı</h4>
+          <p>Başvurunuz yönetim paneline iletildi. En kısa sürede değerlendirilecektir.</p>
+        </div>
+        <div id="lsb-form">
+          <div class="form-row">
+            <div class="form-group"><label>Oyun İçi İsim</label><input type="text" id="lsb-oyunadi" placeholder="Ad Soyad" /></div>
+            <div class="form-group"><label>Discord Kullanıcı Adı</label><input type="text" id="lsb-discord" placeholder="#0000" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Mevcut Görev</label><input type="text" id="lsb-gorev" placeholder="Göreviniz" /></div>
+            <div class="form-group"><label>Sunucudaki Süreniz</label><input type="text" id="lsb-sure" placeholder="Örn: 6 ay" /></div>
+          </div>
+          <div class="form-group"><label>Hangi Departmana Başvuruyorsunuz?</label>
+            <select id="lsb-dept"><option value="">— Seçiniz —</option></select>
+          </div>
+          <div class="form-group"><label>Neden bu pozisyon için uygunsunuz?</label>
+            <textarea id="lsb-neden" placeholder="Kendinizi ve bu pozisyona uygunluğunuzu açıklayın..."></textarea>
+          </div>
+          <div class="form-group"><label>Daha önce benzer görev aldınız mı?</label>
+            <textarea id="lsb-deneyim" placeholder="Önceki deneyimlerinizi belirtin..."></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitForm('lsb')">Başvuruyu Gönder →</button>
+        </div>
+      </div>
+    </div>
+    <div id="form-dept-sikayet" class="form-panel">
+      <div class="form-card">
+        <h3>Departman Şikayet / Öneri</h3>
+        <p>Herhangi bir departmana yönelik şikayet veya önerinizi buradan iletebilirsiniz.</p>
+        <div id="ds-success" class="form-success">
+          <div class="check">✅</div>
+          <h4>Bildiriminiz Alındı</h4>
+          <p>Şikayet/öneriniz yönetim paneline iletildi.</p>
+        </div>
+        <div id="ds-form">
+          <div class="form-row">
+            <div class="form-group"><label>Oyun İçi İsim</label><input type="text" id="ds-oyunadi" placeholder="Ad Soyad" /></div>
+            <div class="form-group"><label>Discord Kullanıcı Adı</label><input type="text" id="ds-discord" placeholder="#0000" /></div>
+          </div>
+          <div class="form-group"><label>İlgili Departman</label>
+            <select id="ds-dept"><option value="">— Seçiniz —</option></select>
+          </div>
+          <div class="form-group"><label>Tür</label>
+            <select id="ds-tur"><option>Şikayet</option><option>Öneri</option></select>
+          </div>
+          <div class="form-group"><label>Açıklama</label>
+            <textarea rows="5" id="ds-aciklama" placeholder="Şikayet veya önerinizi detaylıca açıklayın..."></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitForm('ds')">Gönder →</button>
+        </div>
+      </div>
+    </div>
+    <div id="form-legal-sup-sikayet" class="form-panel">
+      <div class="form-card">
+        <h3>Legal Sup Şikayet</h3>
+        <p>Bir Legal Supervisor hakkındaki şikayetinizi resmi olarak buradan iletebilirsiniz.</p>
+        <div id="lss-success" class="form-success">
+          <div class="check">✅</div>
+          <h4>Şikayetiniz Alındı</h4>
+          <p>İlgili birim tarafından incelenecektir.</p>
+        </div>
+        <div id="lss-form">
+          <div class="form-row">
+            <div class="form-group"><label>Şikayetçi İsim</label><input type="text" id="lss-sik" placeholder="Ad Soyad" /></div>
+            <div class="form-group"><label>Discord</label><input type="text" id="lss-discord" placeholder="#0000" /></div>
+          </div>
+          <div class="form-group"><label>Şikayet Edilen Legal Sup</label><input type="text" id="lss-edilen" placeholder="İsim" /></div>
+          <div class="form-group"><label>Olay Tarihi / Saati</label><input type="text" id="lss-tarih" placeholder="GG/AA/YYYY - SS:DD" /></div>
+          <div class="form-group"><label>Olay Açıklaması</label>
+            <textarea rows="5" id="lss-aciklama" placeholder="Yaşanan olayı detaylıca aktarın..."></textarea>
+          </div>
+          <div class="form-group"><label>Kanıt / Ekran Görüntüsü Linki (opsiyonel)</label>
+            <input type="text" id="lss-kanit" placeholder="https://" /></div>
+          <button class="submit-btn" onclick="submitForm('lss')">Şikayeti Gönder →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== KURALLAR ========== -->
+<div id="page-kurallar" class="page">
+  <div class="section-hero">
+    <div class="section-tag">Hukuk Mevzuatı</div>
+    <h2 class="section-title">KURALLAR &amp; KANUNLAR</h2>
+    <p class="section-desc">Juice Legal mevzuatı ve ceza kanununa buradan ulaşabilirsiniz.</p>
+  </div>
+  <div class="rules-container">
+    <div class="rules-grid">
+      <div class="rules-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Legal Kurallar
+        </h3>
+        <p>Juice Legal departmanının tüm iç işleyiş kurallarını, protokollerini ve davranış standartlarını içeren resmi belge.</p>
+        <div id="rules-btn-wrap">
+          <span style="font-size:0.8rem;color:var(--gray);">Doküman henüz yüklenmedi.</span>
+        </div>
+      </div>
+      <div class="rules-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          Ceza Kanunu
+        </h3>
+        <p>Sunucu içinde geçerli suç tanımları, ceza miktarları ve yargılama prosedürlerini kapsayan ceza hukuku belgesi.</p>
+        <div id="ceza-btn-wrap">
+          <span style="font-size:0.8rem;color:var(--gray);">Doküman henüz yüklenmedi.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== HAFTANIN MEMURU ========== -->
+<div id="page-hafta" class="page">
+  <div class="section-hero">
+    <div class="section-tag">Haftalık Takdir</div>
+    <h2 class="section-title">HAFTANIN MEMURU</h2>
+    <p class="section-desc">Haftanın en başarılı ve özverili personelini kutluyoruz.</p>
+  </div>
+  <div class="week-container">
+    <div class="week-card" id="week-display">
+      <div class="week-photo">
+        <div class="week-badge">Bu Haftanın Memuru</div>
+        <div class="week-photo-inner" id="week-photo-inner">
+          <div class="week-photo-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span style="font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;">Fotoğraf</span>
+          </div>
+        </div>
+      </div>
+      <div class="week-info">
+        <div class="week-num" id="week-num-display">Hafta #1 · 2025</div>
+        <h2 id="week-name">[ İsim Soyisim ]</h2>
+        <div class="role" id="week-role">[ Görev / Rütbe ]</div>
+        <div class="tenure" id="week-tenure">Görev Süreci: [ Süre ]</div>
+        <div class="message" id="week-msg">
+          Bu haftaki üstün performansı, özverili çalışması ve ekibine katkılarından dolayı tebrik ederiz. Juice Legal ailesi olarak gurur duyuyoruz.
+        </div>
+        <div class="week-stars">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARŞİV -->
+    <div class="week-archive" id="week-archive" style="display:none;">
+      <div class="archive-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/></svg>
+        Geçmiş Haftalar
+      </div>
+      <div id="archive-list" class="archive-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ADMİN ========== -->
+<div id="page-admin" class="page">
+  <div class="admin-login" id="admin-login">
+    <div class="login-card">
+      <div class="login-logo">⚖ JUICE</div>
+      <div class="login-sub">Admin Panel · Giriş</div>
+      <div class="form-group"><label>Kullanıcı Adı</label><input type="text" id="login-user" placeholder="kullanici_adi" /></div>
+      <div class="form-group"><label>Şifre</label><input type="password" id="login-pass" placeholder="••••••••" /></div>
+      <div class="login-err" id="login-err">Kullanıcı adı veya şifre hatalı.</div>
+      <button class="login-btn" onclick="adminLogin()">Giriş Yap</button>
+    </div>
+  </div>
+
+  <div class="admin-dash" id="admin-dash">
+    <div class="admin-sidebar">
+      <div style="font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--gold);letter-spacing:2px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(201,168,76,0.15);">⚖ PANEL</div>
+      <h4>Genel</h4>
+      <div class="sidebar-link active" onclick="adminSection('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Kontrol Paneli
+      </div>
+      <h4>Formlar</h4>
+      <div class="sidebar-link" onclick="adminSection('forms-lsb',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Sup Başvuruları
+      </div>
+      <div class="sidebar-link" onclick="adminSection('forms-ds',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Dept Şikayetleri
+      </div>
+      <div class="sidebar-link" onclick="adminSection('forms-lss',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Sup Şikayetleri
+      </div>
+      <h4>İçerik</h4>
+      <div class="sidebar-link" onclick="adminSection('dept-editor',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        Departman Yönetimi
+      </div>
+      <div class="sidebar-link" onclick="adminSection('week-editor',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        Haftanın Memuru
+      </div>
+      <div class="sidebar-link" onclick="adminSection('announcement',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        Duyuru Sistemi
+      </div>
+      <div class="sidebar-link" onclick="adminSection('rules-editor',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Kurallar / Drive
+      </div>
+      <div class="sidebar-link" onclick="adminSection('stats-editor',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        İstatistikler
+      </div>
+      <h4>Yönetim</h4>
+      <div class="sidebar-link" onclick="adminSection('accounts',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Hesap Yönetimi
+      </div>
+      <div class="sidebar-link" onclick="adminSection('activity-log',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Aktivite Logu
+      </div>
+      <button class="logout-btn" onclick="adminLogout()">Çıkış Yap</button>
+    </div>
+
+    <div class="admin-main">
+      <!-- DASHBOARD -->
+      <div id="asec-dashboard" class="admin-section active">
+        <div class="admin-title">Kontrol Paneli</div>
+        <div class="admin-stats">
+          <div class="astat"><div class="num" id="adash-personel">47</div><div class="lbl">Aktif Personel</div></div>
+          <div class="astat"><div class="num" id="adash-birim">12</div><div class="lbl">Aktif Birim</div></div>
+          <div class="astat"><div class="num" id="adash-dept">5</div><div class="lbl">Departman</div></div>
+          <div class="astat"><div class="num" id="adash-forms">0</div><div class="lbl">Bekleyen Form</div></div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--gray);">Hoş geldiniz, <span style="color:var(--gold);" id="welcome-name">Admin</span></div>
+      </div>
+
+      <!-- FORMS LSB -->
+      <div id="asec-forms-lsb" class="admin-section">
+        <div class="admin-title">Sup Başvuruları</div>
+        <div class="export-bar"><button class="action-btn" onclick="exportSubmissions('lsb')">📋 Metni Kopyala</button></div>
+        <div class="submissions-list" id="list-lsb"><div class="empty-state">Henüz başvuru yok.</div></div>
+      </div>
+
+      <!-- FORMS DS -->
+      <div id="asec-forms-ds" class="admin-section">
+        <div class="admin-title">Departman Şikayetleri</div>
+        <div class="export-bar"><button class="action-btn" onclick="exportSubmissions('ds')">📋 Metni Kopyala</button></div>
+        <div class="submissions-list" id="list-ds"><div class="empty-state">Henüz şikayet yok.</div></div>
+      </div>
+
+      <!-- FORMS LSS -->
+      <div id="asec-forms-lss" class="admin-section">
+        <div class="admin-title">Sup Şikayetleri</div>
+        <div class="export-bar"><button class="action-btn" onclick="exportSubmissions('lss')">📋 Metni Kopyala</button></div>
+        <div class="submissions-list" id="list-lss"><div class="empty-state">Henüz şikayet yok.</div></div>
+      </div>
+
+      <!-- DEPARTMAN YÖNETIMI -->
+      <div id="asec-dept-editor" class="admin-section">
+        <div class="admin-title">Departman Yönetimi</div>
+        <div class="dept-editor-layout">
+          <div class="dept-selector">
+            <div class="dept-sel-title">Departmanlar</div>
+            <div id="dept-sel-list"></div>
+          </div>
+          <div class="dept-edit-panel" id="dept-edit-panel">
+            <div style="color:var(--gray);font-size:0.85rem;text-align:center;padding:3rem;">Soldaki listeden bir departman seçin.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HAFTANIN MEMURU -->
+      <div id="asec-week-editor" class="admin-section">
+        <div class="admin-title">Haftanın Memuru — Düzenle</div>
+        <div class="week-editor">
+          <div class="form-group"><label>İsim Soyisim</label><input type="text" id="we-name" placeholder="Ad Soyad" /></div>
+          <div class="form-row">
+            <div class="form-group"><label>Görev / Rütbe</label><input type="text" id="we-role" placeholder="Kıdemli Savcı" /></div>
+            <div class="form-group"><label>Görev Süreci</label><input type="text" id="we-tenure" placeholder="6 ay 2 hafta" /></div>
+          </div>
+          <div class="form-group"><label>Tebrik Mesajı</label><textarea id="we-msg" rows="4" placeholder="Tebrik mesajını yazın..."></textarea></div>
+          <div class="form-group"><label>Hafta Numarası</label><input type="text" id="we-num" placeholder="Hafta #1 · 2025" /></div>
+          <div class="form-group"><label>Fotoğraf URL (opsiyonel)</label><input type="text" id="we-photo" placeholder="https://i.imgur.com/..." /></div>
+          <button class="submit-btn" onclick="saveWeek()">Kaydet &amp; Yayınla</button>
+        </div>
+      </div>
+
+      <!-- DUYURU -->
+      <div id="asec-announcement" class="admin-section">
+        <div class="admin-title">Duyuru Sistemi</div>
+        <div class="week-editor">
+          <div class="form-group"><label>Duyuru Metni</label><textarea id="ann-input" rows="3" placeholder="Duyuru metnini buraya yazın..."></textarea></div>
+          <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+            <button class="submit-btn" onclick="saveAnnouncement()">Yayınla</button>
+            <button class="action-btn danger" onclick="removeAnnouncement()">Duyuruyu Kaldır</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KURALLAR / DRIVE -->
+      <div id="asec-rules-editor" class="admin-section">
+        <div class="admin-title">Kurallar — Drive Linkleri</div>
+        <div class="week-editor">
+          <div class="form-group">
+            <label>Legal Kurallar — Drive Linki</label>
+            <input type="text" id="rules-url-input" placeholder="https://drive.google.com/file/d/..." />
+          </div>
+          <div class="form-group">
+            <label>Ceza Kanunu — Drive Linki</label>
+            <input type="text" id="ceza-url-input" placeholder="https://drive.google.com/file/d/..." />
+          </div>
+          <button class="submit-btn" onclick="saveDriveLinks()">Linkleri Kaydet</button>
+        </div>
+      </div>
+
+      <!-- İSTATİSTİKLER -->
+      <div id="asec-stats-editor" class="admin-section">
+        <div class="admin-title">İstatistikleri Düzenle</div>
+        <div class="week-editor">
+          <div class="form-row">
+            <div class="form-group"><label>Aktif Personel</label><input type="number" id="se-personel" placeholder="47" /></div>
+            <div class="form-group"><label>Aktif Birim</label><input type="number" id="se-birim" placeholder="12" /></div>
+          </div>
+          <div class="form-group"><label>Aktif Departman</label><input type="number" id="se-dept" placeholder="5" /></div>
+          <button class="submit-btn" onclick="saveStats()">Güncelle</button>
+        </div>
+      </div>
+
+      <!-- HESAP YÖNETİMİ -->
+      <div id="asec-accounts" class="admin-section">
+        <div class="admin-title">Hesap Yönetimi</div>
+        <div class="accounts-grid" id="accounts-grid"></div>
+        <div class="new-account-form">
+          <h4>Yeni Hesap Oluştur</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Kullanıcı Adı</label><input type="text" id="new-user" placeholder="kullanici" /></div>
+            <div class="form-group"><label>Şifre</label><input type="password" id="new-pass" placeholder="şifre" /></div>
+          </div>
+          <div class="form-group"><label>Yetki Seviyesi</label>
+            <select id="new-role"><option value="sup">Legal Sup</option><option value="manager">Legal Manager</option></select>
+          </div>
+          <div class="form-group"><label>Görünen İsim</label><input type="text" id="new-name" placeholder="Ad Soyad" /></div>
+          <button class="submit-btn" onclick="createAccount()">Hesap Oluştur</button>
+          <div id="acc-msg" style="font-size:0.78rem;margin-top:0.5rem;display:none;color:var(--success);">Hesap oluşturuldu.</div>
+        </div>
+
+        <div class="new-account-form" style="margin-top:1.5rem;">
+          <h4>Şifre Değiştir</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Mevcut Şifre</label><input type="password" id="cp-old" placeholder="Mevcut şifre" /></div>
+            <div class="form-group"><label>Yeni Şifre</label><input type="password" id="cp-new" placeholder="Yeni şifre" /></div>
+          </div>
+          <button class="submit-btn" onclick="changePassword()">Şifreyi Değiştir</button>
+          <div id="cp-msg" style="font-size:0.78rem;margin-top:0.5rem;display:none;"></div>
+        </div>
+      </div>
+
+      <!-- AKTİVİTE LOGU -->
+      <div id="asec-activity-log" class="admin-section">
+        <div class="admin-title">Aktivite Logu</div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
+          <button class="action-btn danger" onclick="clearLog()">Logu Temizle</button>
+        </div>
+        <div id="activity-list" class="submissions-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
