@@ -1,84 +1,228 @@
-// ======================================================
-// STATE
-// ======================================================
-let accounts = [
-  { user: 'admin', pass: 'justice2024', role: 'manager', name: 'Admin' }
-];
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc, updateDoc, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCeRpkisdRmqhxI1bev6EEj1JF-Tp4wC8s",
+  authDomain: "juicelegal-2a6a8.firebaseapp.com",
+  projectId: "juicelegal-2a6a8",
+  storageBucket: "juicelegal-2a6a8.firebasestorage.app",
+  messagingSenderId: "990867850714",
+  appId: "1:990867850714:web:8b579d918a72524e1bace3",
+  measurementId: "G-YJVTQNJEKE"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ============================================================
+// DEPT DATA (varsayılan)
+// ============================================================
+const DEPTS = {
+  mrpd: { name: "Mission Row Police Department", tag: "Emniyet", ranks: ["Captain","Lieutenant","Sergeant"] },
+  vpd:  { name: "Vespucci Police Department",    tag: "Emniyet", ranks: ["Captain","Lieutenant","Sergeant"] },
+  dsd:  { name: "Davis Sheriff Office",           tag: "Şerif Ofisi", ranks: ["Captain","Lieutenant","Sergeant"] },
+  sahp: { name: "San Andreas Highway Patrol",     tag: "Devlet Polisi", ranks: ["Captain","Lieutenant","Sergeant"] },
+  sdso: { name: "Senora Desert Sheriff Office",   tag: "Şerif Ofisi", ranks: ["Captain","Lieutenant","Sergeant"] },
+  pbso: { name: "Paleto Bay Sheriff Office",      tag: "Şerif Ofisi", ranks: ["Captain","Lieutenant","Sergeant"] },
+  sapr: { name: "San Andreas Park Ranger",        tag: "Park & Doğa", ranks: ["Captain","Lieutenant","Sergeant"] },
+  doj:  { name: "Department Of Justice",          tag: "Adalet Bakanlığı", ranks: ["Yargıç","Savcı","Baro Başkanı"] },
+  lsms: { name: "Los Santos Medical Services",    tag: "Sağlık", ranks: ["Başhekim","Başhekim Yardımcısı"] },
+  lswn: { name: "Los Santos Weazel News",         tag: "Medya", ranks: ["Yönetici","Yönetici Yardımcısı"] }
+};
+
+// Local state
+let deptData = {};
+let galeriPhotos = [];
+let announcements = [];
+let weekArchive = [];
 let submissions = { lsb:[], ds:[], lss:[] };
+let accounts = [{ user:'admin', pass:'justice2024', role:'manager', name:'Admin' }];
 let activityLog = [];
-let currentAdmin = null;
-let weekHistory = [];
-let driveLinks = { rules:'', ceza:'' };
-let currentDeptKey = null;
+let currentUser = null;
+let rulesData = { rules: { url:'', embed:true }, ceza: { url:'', embed:true } };
+let statsData = { personel:47, birim:12, dept:5 };
+let weekData = { name:'[ İsim Soyisim ]', role:'[ Görev / Rütbe ]', tenure:'[ Süre ]', msg:'Bu haftaki üstün performansı ve özverili çalışmasından dolayı tebrik ederiz.', num:'Hafta #1 · 2025', photo:'' };
+let visitorCount = 0;
+let isDarkTheme = true;
+let currentDeptEditing = null;
+let deptUnits = {};
 
-// Default departments
-let departments = [
-  { key:'mrpd', short:'MRPD', name:'Mission Row Police Department', tag:'Emniyet', desc:'Mission Row Polis Departmanı, Los Santos şehir merkezinin güvenliğinden sorumlu ana kolluk kuvvetidir.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Departman Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Subay',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'vpd', short:'VPD', name:'Vespucci Police Department', tag:'Emniyet', desc:'Vespucci Polis Departmanı, sahil bölgesi ve Vespucci Plajı\'nın güvenliğinden sorumlu kolluk birimidir.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Departman Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Subay',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'dsd', short:'DSD', name:'Davis Sheriff Office', tag:'Şerif Ofisi', desc:'Davis Şerif Ofisi, Davis bölgesi ve çevresinin güvenliğini sağlayan şerif birimidir.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Departman Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Subay',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'sahp', short:'SAHP', name:'San Andreas Highway Patrol', tag:'Devlet Polisi', desc:'San Andreas Karayolu Polisi, eyalet genelindeki otoyollar üzerindeki trafik denetiminden sorumludur.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Departman Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Subay',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'sdso', short:'SDSO', name:'Senora Desert Sheriff Office', tag:'Şerif Ofisi', desc:'Senora Çölü Şerif Ofisi, çöl bölgesi ve geniş kırsal alanlardaki güvenlik operasyonlarını yürütür.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Departman Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Subay',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'pbso', short:'PBSO', name:'Paleto Bay Sheriff Office', tag:'Şerif Ofisi', desc:'Paleto Bay Şerif Ofisi, kuzey bölgeleri ve Paleto Körfezi çevresindeki güvenliği sağlar.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Departman Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Subay',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'sapr', short:'SAPR', name:'San Andreas Park Ranger', tag:'Park & Doğa', desc:'San Andreas Park Korucuları, milli parklar ve orman alanlarının güvenliğini sağlar.', img:'', status:'aktif', ranks:[{icon:'★★★',name:'Captain',sub:'Birim Komutanı',holder:'[ İsim ]',photo:''},{icon:'★★',name:'Lieutenant',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''},{icon:'★',name:'Sergeant',sub:'Kıdemli Korucu',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'doj', short:'DOJ', name:'Department Of Justice', tag:'Adalet Bakanlığı', desc:'Adalet Bakanlığı, tüm hukuki süreçlerin en üst denetim merciidir.', img:'', status:'aktif', ranks:[{icon:'⚖',name:'Yargıç',sub:'Yargı Mercii',holder:'[ İsim ]',photo:''},{icon:'⚖',name:'Savcı',sub:'İddianame Makamı',holder:'[ İsim ]',photo:''},{icon:'⚖',name:'Baro Başkanı',sub:'Savunma Mercii',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'lsms', short:'LSMS', name:'Los Santos Medical Services', tag:'Sağlık', desc:'Los Santos Sağlık Hizmetleri, şehir genelinde acil tıbbi müdahale ve sağlık hizmetlerini yürütür.', img:'', status:'aktif', ranks:[{icon:'✚',name:'Başhekim',sub:'Birim Başkanı',holder:'[ İsim ]',photo:''},{icon:'✚',name:'Başhekim Yardımcısı',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''}], units:[], personnel:[] },
-  { key:'lswn', short:'LSWN', name:'Los Santos Weazel News', tag:'Medya', desc:'Los Santos Weazel News, şehrin resmi haber ve medya kuruluşudur.', img:'', status:'aktif', ranks:[{icon:'📡',name:'Yönetici',sub:'Genel Yayın Yönetmeni',holder:'[ İsim ]',photo:''},{icon:'📡',name:'Yönetici Yardımcısı',sub:'İkinci Komuta',holder:'[ İsim ]',photo:''}], units:[], personnel:[] }
-];
-
-// ======================================================
-// VISITOR COUNTER
-// ======================================================
-function initVisitor() {
-  let count = parseInt(localStorage.getItem('jl_visitors') || '0');
-  const visited = sessionStorage.getItem('jl_visited');
-  if (!visited) {
-    count++;
-    localStorage.setItem('jl_visitors', count);
-    sessionStorage.setItem('jl_visited', '1');
-  }
-  const el = document.getElementById('stat-visitors');
-  if (el) el.textContent = count;
+// ============================================================
+// INIT — sayfa yüklenince Firebase'den veri çek
+// ============================================================
+async function initApp() {
+  await Promise.all([
+    loadStats(),
+    loadWeek(),
+    loadAnnouncements(),
+    loadGaleri(),
+    loadAllDepts(),
+    loadRules(),
+    loadSubmissions(),
+    loadArchive(),
+    loadAccounts(),
+    loadActivityLog(),
+    loadVisitor()
+  ]);
+  renderDeptContents();
+  renderGaleri();
+  renderWeek();
+  renderAnnouncements();
+  renderRules();
+  renderStats();
+  renderArchive();
+  renderActivityLogList();
+  updateFormCount();
 }
 
-// ======================================================
-// THEME
-// ======================================================
-function toggleTheme() {
-  document.body.classList.toggle('light-theme');
-  const btn = document.getElementById('theme-btn');
-  btn.textContent = document.body.classList.contains('light-theme') ? '🌙' : '☀';
-  localStorage.setItem('jl_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
-}
-function initTheme() {
-  if (localStorage.getItem('jl_theme') === 'light') {
-    document.body.classList.add('light-theme');
-    document.getElementById('theme-btn').textContent = '🌙';
-  }
+// ============================================================
+// FIRESTORE HELPERS
+// ============================================================
+async function fsGet(path) {
+  try {
+    const parts = path.split('/');
+    let ref;
+    if (parts.length === 2) ref = doc(db, parts[0], parts[1]);
+    else ref = doc(db, path);
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data() : null;
+  } catch(e) { console.error('fsGet error', path, e); return null; }
 }
 
-// ======================================================
+async function fsSet(path, data) {
+  try {
+    const parts = path.split('/');
+    let ref;
+    if (parts.length === 2) ref = doc(db, parts[0], parts[1]);
+    else ref = doc(db, path);
+    await setDoc(ref, data, { merge: true });
+  } catch(e) { console.error('fsSet error', path, e); }
+}
+
+async function fsColGet(col) {
+  try {
+    const snap = await getDocs(collection(db, col));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { console.error('fsColGet error', col, e); return []; }
+}
+
+async function fsAdd(col, data) {
+  try {
+    const ref = await addDoc(collection(db, col), data);
+    return ref.id;
+  } catch(e) { console.error('fsAdd error', col, e); return null; }
+}
+
+async function fsDel(col, id) {
+  try { await deleteDoc(doc(db, col, id)); } catch(e) { console.error('fsDel error', e); }
+}
+
+// ============================================================
+// LOAD FUNCTIONS
+// ============================================================
+async function loadStats() {
+  const d = await fsGet('site/stats');
+  if (d) statsData = d;
+}
+
+async function loadWeek() {
+  const d = await fsGet('site/week');
+  if (d) weekData = d;
+}
+
+async function loadAnnouncements() {
+  announcements = await fsColGet('announcements');
+}
+
+async function loadGaleri() {
+  galeriPhotos = await fsColGet('galeri');
+}
+
+async function loadAllDepts() {
+  const all = await fsColGet('depts');
+  all.forEach(d => { deptData[d.id] = d; deptUnits[d.id] = d.units || []; });
+}
+
+async function loadRules() {
+  const d = await fsGet('site/rules');
+  if (d) rulesData = d;
+}
+
+async function loadSubmissions() {
+  const all = await fsColGet('submissions');
+  submissions = { lsb:[], ds:[], lss:[] };
+  all.forEach(s => {
+    if (submissions[s.type]) submissions[s.type].push(s);
+  });
+}
+
+async function loadArchive() {
+  weekArchive = await fsColGet('weekArchive');
+  weekArchive.sort((a,b) => (b.savedAt||0) - (a.savedAt||0));
+}
+
+async function loadAccounts() {
+  const d = await fsGet('site/accounts');
+  if (d && d.list) accounts = d.list;
+}
+
+async function loadActivityLog() {
+  const d = await fsGet('site/activityLog');
+  if (d && d.log) activityLog = d.log;
+}
+
+async function loadVisitor() {
+  const d = await fsGet('site/visitors');
+  visitorCount = d ? (d.count || 0) : 0;
+  visitorCount++;
+  await fsSet('site/visitors', { count: visitorCount });
+  const el = document.getElementById('visitor-count');
+  if (el) el.textContent = visitorCount;
+}
+
+// ============================================================
 // NAVIGATION
-// ======================================================
+// ============================================================
 function goPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  const navEl = document.getElementById('nav-' + id);
-  if (navEl) navEl.classList.add('active');
-  window.scrollTo(0, 0);
+  const page = document.getElementById('page-'+id);
+  if (page) page.classList.add('active');
+  const nav = document.getElementById('nav-'+id);
+  if (nav) nav.classList.add('active');
+  window.scrollTo(0,0);
 }
 
-// ======================================================
+function toggleMobileNav() {
+  document.getElementById('mobile-nav').classList.toggle('open');
+}
+function closeMobileNav() {
+  document.getElementById('mobile-nav').classList.remove('open');
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme() {
+  isDarkTheme = !isDarkTheme;
+  document.body.classList.toggle('light-theme', !isDarkTheme);
+  document.getElementById('theme-btn').textContent = isDarkTheme ? '🌙' : '☀️';
+}
+
+// ============================================================
 // SEARCH
-// ======================================================
+// ============================================================
 const searchIndex = [
-  { page: 'hakkimizda', label: 'Hakkımızda', keywords: 'hakkımızda juice legal departman personel adalet düzen hukuk başvur' },
-  { page: 'galeri', label: 'Galeri', keywords: 'galeri fotoğraf resim görsel departman' },
-  { page: 'departmanlar', label: 'Departmanlar', keywords: 'departmanlar mrpd vpd dsd sahp sdso pbso sapr doj lsms lswn emniyet polis şerif adalet sağlık medya' },
-  { page: 'formlar', label: 'Formlar', keywords: 'formlar başvuru şikayet öneri legal sup departman' },
-  { page: 'kurallar', label: 'Kurallar & Kanunlar', keywords: 'kurallar kanunlar ceza hukuk mevzuat' },
-  { page: 'hafta', label: 'Haftanın Memuru', keywords: 'haftanın memuru haftalık takdir personel arşiv' },
-  { page: 'admin', label: 'Admin Panel', keywords: 'admin yönetici panel giriş' }
+  { title:'Hakkımızda', page:'hakkimizda', desc:'Juice Legal hakkında bilgi' },
+  { title:'Galeri', page:'galeri', desc:'Fotoğraf galerisi' },
+  { title:'Departmanlar', page:'departmanlar', desc:'MRPD VPD DSD SAHP SDSO PBSO SAPR DOJ LSMS LSWN' },
+  { title:'Formlar', page:'formlar', desc:'Legal Sup başvurusu departman şikayet' },
+  { title:'Kurallar', page:'kurallar', desc:'Legal kurallar ceza kanunu' },
+  { title:'Haftanın Memuru', page:'hafta', desc:'Haftalık ödül takdir' },
+  { title:'Yönetici', page:'admin', desc:'Admin panel yönetim' },
 ];
 
 function openSearch() {
@@ -90,429 +234,558 @@ function closeSearch() {
   document.getElementById('search-input').value = '';
   document.getElementById('search-results').innerHTML = '';
 }
-document.getElementById('search-input').addEventListener('input', function() {
-  const q = this.value.trim().toLowerCase();
+function doSearch(val) {
+  const q = val.toLowerCase().trim();
   const res = document.getElementById('search-results');
   if (!q) { res.innerHTML = ''; return; }
-  const matches = [];
-  searchIndex.forEach(item => {
-    if (item.keywords.includes(q) || item.label.toLowerCase().includes(q)) matches.push(item);
-  });
-  departments.forEach(d => {
-    if (d.name.toLowerCase().includes(q) || d.short.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q)) {
-      matches.push({ page: 'departmanlar', label: 'Departmanlar — ' + d.short, keywords: '', _deptKey: d.key });
-    }
-  });
-  if (!matches.length) { res.innerHTML = '<div class="search-result-item"><div class="res-text" style="color:var(--gray);">Sonuç bulunamadı.</div></div>'; return; }
+  const matches = searchIndex.filter(i => i.title.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q));
+  if (!matches.length) { res.innerHTML = '<div class="sr-empty">Sonuç bulunamadı.</div>'; return; }
   res.innerHTML = matches.map(m => `
-    <div class="search-result-item" onclick="searchGoTo('${m.page}','${m._deptKey||''}')">
-      <div class="res-page">${m.label.split('—')[0].trim()}</div>
-      <div class="res-text">${m.label}</div>
+    <div class="sr-item" onclick="goPage('${m.page}');closeSearch()">
+      <div class="sr-title">${m.title}</div>
+      <div class="sr-desc">${m.desc}</div>
     </div>`).join('');
-});
-function searchGoTo(page, deptKey) {
-  closeSearch();
-  goPage(page);
-  if (deptKey) {
-    setTimeout(() => {
-      const tab = document.querySelector(`.fandom-tab[data-key="${deptKey}"]`);
-      if (tab) { tab.click(); tab.scrollIntoView({ behavior: 'smooth' }); }
-    }, 100);
-  }
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSearch(); });
-document.getElementById('search-overlay').addEventListener('click', function(e) { if (e.target === this) closeSearch(); });
 
-// ======================================================
+// ============================================================
 // ANNOUNCEMENT
-// ======================================================
-function saveAnnouncement() {
+// ============================================================
+function renderAnnouncements() {
+  const active = announcements.filter(a => a.active);
+  const bar = document.getElementById('announcement-bar');
+  const heroAnns = document.getElementById('hero-announcements');
+
+  if (active.length > 0) {
+    const latest = active[active.length - 1];
+    bar.style.display = 'block';
+    bar.className = 'ann-bar ann-' + (latest.color || 'gold');
+    document.getElementById('ann-text').textContent = latest.text;
+    document.getElementById('main-nav').style.top = '40px';
+    document.querySelectorAll('.page').forEach(p => p.style.paddingTop = '104px');
+  } else {
+    bar.style.display = 'none';
+    document.getElementById('main-nav').style.top = '0';
+    document.querySelectorAll('.page').forEach(p => p.style.paddingTop = '64px');
+  }
+
+  if (heroAnns) {
+    heroAnns.innerHTML = active.map(a => `
+      <div class="hero-ann-item ann-hero-${a.color||'gold'}">
+        <span>📢</span> ${a.text}
+      </div>`).join('');
+  }
+
+  // Admin listesi
+  const annList = document.getElementById('ann-list');
+  if (!annList) return;
+  if (!announcements.length) { annList.innerHTML = '<div class="empty-list">Henüz duyuru yok.</div>'; return; }
+  annList.innerHTML = announcements.map(a => `
+    <div class="sub-item">
+      <div>
+        <h4>${a.text}</h4>
+        <div class="sub-meta">Renk: ${a.color} · ${a.active ? '✅ Aktif' : '⏸ Pasif'}</div>
+        <button class="action-btn" onclick="toggleAnn('${a.id}',${!a.active})">${a.active ? 'Gizle' : 'Göster'}</button>
+        <button class="action-btn danger" onclick="deleteAnn('${a.id}')">Sil</button>
+      </div>
+      <span class="sub-badge ${a.active?'new':'read'}">${a.active?'Aktif':'Pasif'}</span>
+    </div>`).join('');
+}
+
+function closeAnn() {
+  document.getElementById('announcement-bar').style.display = 'none';
+}
+
+async function saveAnnouncement() {
   const text = document.getElementById('ann-input').value.trim();
   if (!text) return;
-  const bar = document.getElementById('announcement-bar');
-  document.getElementById('ann-text').textContent = text;
-  bar.style.display = 'block';
-  localStorage.setItem('jl_announcement', text);
-  addLog('Duyuru yayınlandı: ' + text.substring(0, 40) + '...');
-  alert('✅ Duyuru yayınlandı!');
+  const color = document.getElementById('ann-color').value;
+  const active = document.getElementById('ann-active').value === '1';
+  const id = await fsAdd('announcements', { text, color, active });
+  announcements.push({ id, text, color, active });
+  document.getElementById('ann-input').value = '';
+  renderAnnouncements();
+  logActivity('Duyuru eklendi: ' + text);
 }
-function removeAnnouncement() {
-  document.getElementById('announcement-bar').style.display = 'none';
-  localStorage.removeItem('jl_announcement');
-  addLog('Duyuru kaldırıldı.');
+
+async function toggleAnn(id, val) {
+  await fsSet('announcements/'+id, { active: val });
+  const a = announcements.find(x => x.id === id);
+  if (a) a.active = val;
+  renderAnnouncements();
 }
-function closeAnnouncement() {
-  document.getElementById('announcement-bar').style.display = 'none';
+
+async function deleteAnn(id) {
+  await fsDel('announcements', id);
+  announcements = announcements.filter(a => a.id !== id);
+  renderAnnouncements();
+  logActivity('Duyuru silindi');
 }
-function loadAnnouncement() {
-  const saved = localStorage.getItem('jl_announcement');
-  if (saved) {
-    document.getElementById('ann-text').textContent = saved;
-    document.getElementById('announcement-bar').style.display = 'block';
-    document.getElementById('ann-input').value = saved;
+
+// ============================================================
+// GALERİ
+// ============================================================
+function renderGaleri() {
+  const grid = document.getElementById('galeri-grid');
+  const empty = document.getElementById('galeri-empty');
+  if (!grid) return;
+  if (!galeriPhotos.length) {
+    if (empty) empty.style.display = 'flex';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  grid.innerHTML = galeriPhotos.map(p => `
+    <div class="galeri-item" onclick="openLightbox('${p.url}','${p.caption||''}')">
+      <img src="${p.url}" alt="${p.caption||''}" onerror="this.parentElement.innerHTML='<div class=galeri-placeholder><span>Yüklenemedi</span></div>'" />
+      ${p.caption ? `<div class="galeri-caption">${p.caption}</div>` : ''}
+    </div>`).join('');
+
+  const adminGrid = document.getElementById('galeri-admin-list');
+  if (!adminGrid) return;
+  if (!galeriPhotos.length) { adminGrid.innerHTML = '<div class="empty-list">Henüz fotoğraf yok.</div>'; return; }
+  adminGrid.innerHTML = galeriPhotos.map(p => `
+    <div class="galeri-admin-item">
+      <img src="${p.url}" alt="" />
+      <div class="gai-caption">${p.caption||'—'}</div>
+      <button class="action-btn danger" onclick="deleteGaleriPhoto('${p.id}')">Sil</button>
+    </div>`).join('');
+}
+
+function openLightbox(url, caption) {
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  lb.innerHTML = `<div class="lb-inner"><img src="${url}" />${caption?`<div class="lb-cap">${caption}</div>`:''}<button class="lb-close" onclick="this.parentElement.parentElement.remove()">✕</button></div>`;
+  lb.onclick = e => { if(e.target===lb) lb.remove(); };
+  document.body.appendChild(lb);
+}
+
+async function addGaleriPhoto() {
+  const url = document.getElementById('galeri-url-input').value.trim();
+  const caption = document.getElementById('galeri-caption-input').value.trim();
+  if (!url) return;
+  const id = await fsAdd('galeri', { url, caption, addedAt: Date.now() });
+  galeriPhotos.push({ id, url, caption });
+  document.getElementById('galeri-url-input').value = '';
+  document.getElementById('galeri-caption-input').value = '';
+  renderGaleri();
+  logActivity('Galeri fotoğrafı eklendi');
+}
+
+async function deleteGaleriPhoto(id) {
+  await fsDel('galeri', id);
+  galeriPhotos = galeriPhotos.filter(p => p.id !== id);
+  renderGaleri();
+  logActivity('Galeri fotoğrafı silindi');
+}
+
+// ============================================================
+// DEPARTMANLAR
+// ============================================================
+function renderDeptContents() {
+  const container = document.getElementById('dept-contents');
+  if (!container) return;
+  const keys = Object.keys(DEPTS);
+  container.innerHTML = keys.map((key, i) => {
+    const def = DEPTS[key];
+    const saved = deptData[key] || {};
+    const ranks = def.ranks;
+    const units = deptUnits[key] || [];
+    const status = saved.status || 'active';
+    const statusLabel = { active:'✅ Aktif', passive:'⏸ Pasif', full:'🔒 Dolu' }[status] || '✅ Aktif';
+    const personelCount = saved.personel || '—';
+
+    return `
+    <div id="fdept-${key}" class="fandom-content ${i===0?'active':''}">
+      <div class="fd-header">
+        <div class="fd-img-wrap">
+          ${saved.img ? `<img src="${saved.img}" alt="${def.name}" />` : `<div class="fd-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Departman Görseli</span></div>`}
+        </div>
+        <div class="fd-info">
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.8rem;">
+            <div class="fd-tag">${def.tag}</div>
+            <div class="fd-status-badge status-${status}">${statusLabel}</div>
+            <div class="fd-personel-badge">👤 ${personelCount} personel</div>
+          </div>
+          <h3>${def.name}</h3>
+          <div class="fd-short">${key.toUpperCase()}</div>
+          <p>${saved.desc || 'Açıklama henüz eklenmemiş.'}</p>
+        </div>
+      </div>
+      <div class="fd-ranks">
+        <div class="fd-ranks-title">Komuta Kademesi</div>
+        <div class="fd-ranks-grid">
+          ${ranks.map((r,ri) => {
+            const cls = ri===0?'gold-rank':ri===1?'silver-rank':'bronze-rank';
+            const icon = ri===0?'★★★':ri===1?'★★':'★';
+            const holder = saved['rank'+ri] || '[ İsim ]';
+            return `<div class="fd-rank-card ${cls}">
+              <div class="rank-icon">${icon}</div>
+              <div class="rank-name">${r}</div>
+              <div class="rank-sub">${ri===0?'Departman Komutanı':ri===1?'İkinci Komuta':'Kıdemli Kadro'}</div>
+              <div class="rank-holder">${holder}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      ${units.length ? `
+      <div class="fd-units" style="margin-top:1.5rem;">
+        <div class="fd-ranks-title">Birimler</div>
+        <div class="unit-list">${units.map(u=>`<span class="unit-badge">${u}</span>`).join('')}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function fandomTab(id, el) {
+  document.querySelectorAll('.fandom-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.fandom-content').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const content = document.getElementById('fdept-'+id);
+  if (content) content.classList.add('active');
+}
+
+// Dept Editor
+function loadDeptEditor(key) {
+  if (!key) { document.getElementById('dept-edit-area').style.display='none'; return; }
+  currentDeptEditing = key;
+  document.getElementById('dept-edit-area').style.display = 'block';
+  const saved = deptData[key] || {};
+  const def = DEPTS[key];
+  document.getElementById('de-img').value = saved.img || '';
+  document.getElementById('de-desc').value = saved.desc || '';
+  document.getElementById('de-status').value = saved.status || 'active';
+  document.getElementById('de-personel').value = saved.personel || '';
+
+  // Ranks
+  const ranksArea = document.getElementById('de-ranks-area');
+  ranksArea.innerHTML = def.ranks.map((r,i) => `
+    <div class="form-group">
+      <label>${r} — İsim</label>
+      <input type="text" id="de-rank-${i}" value="${saved['rank'+i]||''}" placeholder="[ İsim ]" />
+    </div>`).join('');
+
+  // Units
+  deptUnits[key] = saved.units || [];
+  renderUnits(key);
+}
+
+function renderUnits(key) {
+  const list = document.getElementById('de-units-list');
+  if (!list) return;
+  list.innerHTML = (deptUnits[key]||[]).map((u,i) => `
+    <div class="unit-edit-item">
+      <span class="unit-badge">${u}</span>
+      <button class="action-btn danger" onclick="removeUnit(${i})" style="padding:0.2rem 0.6rem;margin:0;">✕</button>
+    </div>`).join('');
+}
+
+function addUnit() {
+  const input = document.getElementById('de-unit-input');
+  const val = input.value.trim();
+  if (!val || !currentDeptEditing) return;
+  if (!deptUnits[currentDeptEditing]) deptUnits[currentDeptEditing] = [];
+  deptUnits[currentDeptEditing].push(val);
+  input.value = '';
+  renderUnits(currentDeptEditing);
+}
+
+function removeUnit(i) {
+  if (!currentDeptEditing) return;
+  deptUnits[currentDeptEditing].splice(i,1);
+  renderUnits(currentDeptEditing);
+}
+
+async function saveDeptData() {
+  if (!currentDeptEditing) return;
+  const key = currentDeptEditing;
+  const def = DEPTS[key];
+  const data = {
+    img: document.getElementById('de-img').value.trim(),
+    desc: document.getElementById('de-desc').value.trim(),
+    status: document.getElementById('de-status').value,
+    personel: document.getElementById('de-personel').value,
+    units: deptUnits[key] || []
+  };
+  def.ranks.forEach((r,i) => {
+    data['rank'+i] = document.getElementById('de-rank-'+i)?.value?.trim() || '';
+  });
+  await fsSet('depts/'+key, data);
+  deptData[key] = { ...data, id: key };
+  renderDeptContents();
+  alert('✅ ' + key.toUpperCase() + ' departmanı kaydedildi!');
+  logActivity(key.toUpperCase() + ' departmanı güncellendi');
+}
+
+// ============================================================
+// KURALLAR
+// ============================================================
+function renderRules() {
+  ['rules','ceza'].forEach(k => {
+    const d = rulesData[k] || {};
+    const notSet = document.getElementById(k+'-not-set');
+    const viewArea = document.getElementById(k+'-view-area');
+    const openBtn = document.getElementById(k+'-open-btn');
+    const embedArea = document.getElementById(k+'-embed-area');
+    if (!notSet) return;
+    if (d.url) {
+      notSet.style.display = 'none';
+      viewArea.style.display = 'block';
+      openBtn.href = d.url;
+      if (d.embed && embedArea) {
+        const fileId = extractDriveId(d.url);
+        if (fileId) {
+          embedArea.innerHTML = `<iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="500" frameborder="0" style="border-radius:6px;"></iframe>`;
+        }
+      } else if (embedArea) {
+        embedArea.innerHTML = '';
+      }
+    } else {
+      notSet.style.display = 'flex';
+      viewArea.style.display = 'none';
+    }
+  });
+
+  // Admin input doldur
+  if (document.getElementById('rules-url-input')) {
+    document.getElementById('rules-url-input').value = rulesData.rules?.url || '';
+    document.getElementById('ceza-url-input').value = rulesData.ceza?.url || '';
+    document.getElementById('rules-embed-toggle').value = rulesData.rules?.embed ? '1' : '0';
+    document.getElementById('ceza-embed-toggle').value = rulesData.ceza?.embed ? '1' : '0';
   }
 }
 
-// ======================================================
-// DEPARTMENTS — RENDER
-// ======================================================
-function renderDepartmentTabs() {
-  const tabs = document.getElementById('dept-tabs');
-  const contents = document.getElementById('dept-contents');
-  tabs.innerHTML = '';
-  contents.innerHTML = '';
-  departments.forEach((d, i) => {
-    const dotClass = `dot-${d.status}`;
-    const tab = document.createElement('div');
-    tab.className = 'fandom-tab' + (i === 0 ? ' active' : '');
-    tab.dataset.key = d.key;
-    tab.innerHTML = d.short + `<span class="dept-status-dot ${dotClass}"></span>`;
-    tab.onclick = function() {
-      document.querySelectorAll('.fandom-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.fandom-content').forEach(c => c.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById('fdept-' + d.key).classList.add('active');
-    };
-    tabs.appendChild(tab);
-
-    const content = document.createElement('div');
-    content.id = 'fdept-' + d.key;
-    content.className = 'fandom-content' + (i === 0 ? ' active' : '');
-    content.innerHTML = renderDeptContent(d);
-    contents.appendChild(content);
-  });
+function extractDriveId(url) {
+  const m = url.match(/\/file\/d\/([^/]+)/);
+  return m ? m[1] : null;
 }
 
-function renderDeptContent(d) {
-  const imgHTML = d.img
-    ? `<img src="${d.img}" alt="${d.name}" />`
-    : `<div class="fd-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Departman Görseli</span></div>`;
-  const statusLabel = {aktif:'Aktif',pasif:'Pasif',dolu:'Dolu'}[d.status] || 'Aktif';
-  const rankClasses = ['gold-rank','silver-rank','bronze-rank'];
-  const ranksHTML = d.ranks.map((r, i) => {
-    const cls = rankClasses[i] || 'bronze-rank';
-    const photoHTML = r.photo ? `<img src="${r.photo}" class="rank-photo" alt="${r.name}" />` : '';
-    return `<div class="fd-rank-card ${cls}">${photoHTML}<div class="rank-icon">${r.icon}</div><div class="rank-name">${r.name}</div><div class="rank-sub">${r.sub}</div><div class="rank-holder">${r.holder || '[ İsim ]'}</div></div>`;
-  }).join('');
-  const unitsHTML = d.units && d.units.length ? `<div class="fd-units"><div class="fd-units-title">Alt Birimler</div>${d.units.map(u=>`<div class="unit-item"><span class="unit-name">${u.name}</span><span class="unit-count">${u.count||0} personel</span></div>`).join('')}</div>` : '';
-  const personnelHTML = d.personnel && d.personnel.length ? `<div class="fd-personnel"><div class="fd-personnel-title">Personel <span class="personnel-count">${d.personnel.length}</span></div><div class="fd-personnel-grid">${d.personnel.map(p=>{const ava=p.photo?`<img src="${p.photo}" class="personnel-avatar" alt="${p.name}" />`:`<div class="personnel-avatar-placeholder">${(p.name||'?').charAt(0)}</div>`;return `<div class="personnel-card">${ava}<div class="personnel-name">${p.name}</div><div class="personnel-rank">${p.rank}</div></div>`}).join('')}</div></div>` : '';
-
-  return `
-    <div class="fd-header">
-      <div class="fd-img-wrap">${imgHTML}</div>
-      <div class="fd-info">
-        <div class="fd-status-badge status-${d.status}"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>${statusLabel}</div>
-        <div class="fd-tag">${d.tag}</div>
-        <h3>${d.name}</h3>
-        <div class="fd-short">${d.short}</div>
-        <p>${d.desc}</p>
-      </div>
-    </div>
-    <div class="fd-ranks">
-      <div class="fd-ranks-title">Komuta Kademesi</div>
-      <div class="fd-ranks-grid">${ranksHTML}</div>
-    </div>
-    ${unitsHTML}
-    ${personnelHTML}`;
+async function saveRulesUrl(key) {
+  const url = document.getElementById(key+'-url-input').value.trim();
+  const embed = document.getElementById(key+'-embed-toggle').value === '1';
+  if (!rulesData[key]) rulesData[key] = {};
+  rulesData[key].url = url;
+  rulesData[key].embed = embed;
+  await fsSet('site/rules', rulesData);
+  renderRules();
+  alert('✅ Kaydedildi!');
+  logActivity(key + ' Drive linki güncellendi');
 }
 
-// ======================================================
-// DEPARTMENT EDITOR
-// ======================================================
-function renderAdminDeptSelector() {
-  const list = document.getElementById('dept-sel-list');
-  list.innerHTML = departments.map(d => `
-    <div class="dept-sel-item${currentDeptKey === d.key ? ' active' : ''}" onclick="selectDeptForEdit('${d.key}')">${d.short} — ${d.name}</div>
-  `).join('');
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  document.getElementById('stat-personel').textContent = statsData.personel;
+  document.getElementById('stat-birim').textContent = statsData.birim;
+  document.getElementById('stat-dept').textContent = statsData.dept;
+  document.getElementById('adash-personel').textContent = statsData.personel;
+  document.getElementById('adash-birim').textContent = statsData.birim;
+  document.getElementById('adash-dept').textContent = statsData.dept;
 }
 
-function selectDeptForEdit(key) {
-  currentDeptKey = key;
-  const d = departments.find(x => x.key === key);
-  if (!d) return;
-  renderAdminDeptSelector();
-  const panel = document.getElementById('dept-edit-panel');
+async function saveStats() {
+  const p = document.getElementById('se-personel').value;
+  const b = document.getElementById('se-birim').value;
+  const d = document.getElementById('se-dept').value;
+  if (p) statsData.personel = p;
+  if (b) statsData.birim = b;
+  if (d) statsData.dept = d;
+  await fsSet('site/stats', statsData);
+  renderStats();
+  alert('✅ İstatistikler güncellendi!');
+  logActivity('İstatistikler güncellendi');
+}
 
-  const ranksEditorHTML = d.ranks.map((r, i) => `
-    <div class="rank-editor-row">
-      <div class="form-group" style="margin:0"><label style="font-size:0.6rem;">İkon / Sembol</label><input type="text" value="${r.icon}" onchange="updateRank('${key}',${i},'icon',this.value)" style="padding:0.4rem 0.6rem;" /></div>
-      <div class="form-group" style="margin:0"><label style="font-size:0.6rem;">Rütbe Adı</label><input type="text" value="${r.name}" onchange="updateRank('${key}',${i},'name',this.value)" style="padding:0.4rem 0.6rem;" /></div>
-      <div class="form-group" style="margin:0"><label style="font-size:0.6rem;">Görev / İsim</label><input type="text" value="${r.holder}" onchange="updateRank('${key}',${i},'holder',this.value)" placeholder="[ İsim ]" style="padding:0.4rem 0.6rem;" /></div>
-      <div class="form-group" style="margin:0"><label style="font-size:0.6rem;">Fotoğraf URL</label><input type="text" value="${r.photo||''}" onchange="updateRank('${key}',${i},'photo',this.value)" placeholder="https://..." style="padding:0.4rem 0.6rem;" /></div>
+// ============================================================
+// WEEK
+// ============================================================
+function renderWeek() {
+  document.getElementById('week-name').textContent = weekData.name || '[ İsim ]';
+  document.getElementById('week-role').textContent = weekData.role || '[ Görev ]';
+  document.getElementById('week-tenure').textContent = 'Görev Süreci: ' + (weekData.tenure || '—');
+  document.getElementById('week-msg').textContent = weekData.msg || '';
+  document.getElementById('week-num-display').textContent = weekData.num || 'Hafta #1';
+  const ph = document.getElementById('week-photo-placeholder');
+  const area = document.getElementById('week-photo-area');
+  if (weekData.photo) {
+    const existing = area.querySelector('img.week-real-photo');
+    if (existing) existing.remove();
+    const img = document.createElement('img');
+    img.src = weekData.photo;
+    img.className = 'week-real-photo';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+    area.appendChild(img);
+    if (ph) ph.style.display = 'none';
+  }
+}
+
+async function saveWeek() {
+  // Mevcut haftayı arşive ekle
+  if (weekData.name && weekData.name !== '[ İsim Soyisim ]') {
+    const archiveEntry = { ...weekData, savedAt: Date.now() };
+    const aid = await fsAdd('weekArchive', archiveEntry);
+    weekArchive.unshift({ ...archiveEntry, id: aid });
+  }
+
+  weekData = {
+    photo: document.getElementById('we-photo').value.trim(),
+    name: document.getElementById('we-name').value.trim() || '[ İsim ]',
+    role: document.getElementById('we-role').value.trim() || '[ Görev ]',
+    tenure: document.getElementById('we-tenure').value.trim() || '—',
+    msg: document.getElementById('we-msg').value.trim() || 'Tebrikler!',
+    num: document.getElementById('we-num').value.trim() || 'Hafta #1'
+  };
+  await fsSet('site/week', weekData);
+  renderWeek();
+  renderArchive();
+  renderWeekArchiveAdmin();
+  alert('✅ Haftanın memuru güncellendi!');
+  logActivity('Haftanın memuru güncellendi: ' + weekData.name);
+}
+
+function renderArchive() {
+  const list = document.getElementById('archive-list');
+  if (!list) return;
+  if (!weekArchive.length) { list.innerHTML = '<div style="color:var(--gray);text-align:center;padding:3rem;font-size:0.85rem;">Henüz arşiv kaydı yok.</div>'; return; }
+  list.innerHTML = weekArchive.map(w => `
+    <div class="archive-card">
+      <div class="archive-week">${w.num}</div>
+      <div class="archive-name">${w.name}</div>
+      <div class="archive-role">${w.role}</div>
+      <div class="archive-msg">${w.msg}</div>
     </div>`).join('');
+}
 
-  const unitsEditorHTML = (d.units || []).map((u, i) => `
-    <div class="unit-editor-row" id="unit-row-${key}-${i}">
-      <div class="form-group" style="margin:0"><input type="text" value="${u.name}" onchange="updateUnit('${key}',${i},'name',this.value)" placeholder="Birim Adı" style="padding:0.4rem 0.6rem;" /></div>
-      <div class="form-group" style="margin:0"><input type="number" value="${u.count||0}" onchange="updateUnit('${key}',${i},'count',this.value)" placeholder="Personel" style="padding:0.4rem 0.6rem;" /></div>
-      <button class="action-btn danger" onclick="removeUnit('${key}',${i})" style="margin:0;">Sil</button>
-    </div>`).join('');
-
-  const personnelEditorHTML = (d.personnel || []).map((p, i) => `
-    <div class="personnel-editor-row" id="pers-row-${key}-${i}">
-      <div class="form-group" style="margin:0"><input type="text" value="${p.name}" onchange="updatePersonnel('${key}',${i},'name',this.value)" placeholder="İsim Soyisim" style="padding:0.4rem 0.6rem;" /></div>
-      <div class="form-group" style="margin:0"><input type="text" value="${p.rank}" onchange="updatePersonnel('${key}',${i},'rank',this.value)" placeholder="Rütbe" style="padding:0.4rem 0.6rem;" /></div>
-      <div class="form-group" style="margin:0"><input type="text" value="${p.photo||''}" onchange="updatePersonnel('${key}',${i},'photo',this.value)" placeholder="Fotoğraf URL" style="padding:0.4rem 0.6rem;" /></div>
-      <button class="action-btn danger" onclick="removePersonnel('${key}',${i})" style="margin:0;">Sil</button>
-    </div>`).join('');
-
-  panel.innerHTML = `
-    <div class="dept-edit-section">
-      <div class="dept-edit-section-title">Temel Bilgiler</div>
-      <div class="form-group"><label>Departman Adı</label><input type="text" value="${d.name}" onchange="updateDeptField('${key}','name',this.value)" /></div>
-      <div class="form-row">
-        <div class="form-group"><label>Kısa Ad</label><input type="text" value="${d.short}" onchange="updateDeptField('${key}','short',this.value)" /></div>
-        <div class="form-group"><label>Kategori Etiketi</label><input type="text" value="${d.tag}" onchange="updateDeptField('${key}','tag',this.value)" /></div>
+function renderWeekArchiveAdmin() {
+  const el = document.getElementById('week-archive-admin');
+  if (!el) return;
+  if (!weekArchive.length) { el.innerHTML = '<div class="empty-list">Henüz arşiv yok.</div>'; return; }
+  el.innerHTML = weekArchive.slice(0,10).map(w => `
+    <div class="sub-item" style="grid-template-columns:1fr auto;">
+      <div>
+        <h4>${w.name}</h4>
+        <div class="sub-meta">${w.num} · ${w.role}</div>
       </div>
-      <div class="form-group"><label>Açıklama</label><textarea onchange="updateDeptField('${key}','desc',this.value)">${d.desc}</textarea></div>
-      <div class="form-group"><label>Görsel URL</label><input type="text" value="${d.img||''}" onchange="updateDeptField('${key}','img',this.value)" placeholder="https://i.imgur.com/..." /></div>
-      <div class="form-group"><label>Durum</label>
-        <select onchange="updateDeptField('${key}','status',this.value)">
-          <option value="aktif" ${d.status==='aktif'?'selected':''}>Aktif</option>
-          <option value="pasif" ${d.status==='pasif'?'selected':''}>Pasif</option>
-          <option value="dolu" ${d.status==='dolu'?'selected':''}>Dolu</option>
-        </select>
-      </div>
-      <button class="submit-btn" onclick="saveDeptChanges('${key}')">Değişiklikleri Kaydet</button>
-    </div>
-    <div class="dept-edit-section">
-      <div class="dept-edit-section-title">Komuta Kademesi</div>
-      <div id="ranks-editor-${key}">${ranksEditorHTML}</div>
-    </div>
-    <div class="dept-edit-section">
-      <div class="dept-edit-section-title">Alt Birimler</div>
-      <div id="units-editor-${key}">${unitsEditorHTML}</div>
-      <button class="action-btn" onclick="addUnit('${key}')" style="margin-top:0.5rem;">+ Birim Ekle</button>
-    </div>
-    <div class="dept-edit-section">
-      <div class="dept-edit-section-title">Personel</div>
-      <div id="personnel-editor-${key}">${personnelEditorHTML}</div>
-      <button class="action-btn" onclick="addPersonnel('${key}')" style="margin-top:0.5rem;">+ Personel Ekle</button>
-    </div>
-  `;
+      <span class="sub-badge read">${w.num}</span>
+    </div>`).join('');
 }
 
-function updateDeptField(key, field, value) {
-  const d = departments.find(x => x.key === key);
-  if (d) d[field] = value;
-}
-function updateRank(key, i, field, value) {
-  const d = departments.find(x => x.key === key);
-  if (d && d.ranks[i]) d.ranks[i][field] = value;
-}
-function updateUnit(key, i, field, value) {
-  const d = departments.find(x => x.key === key);
-  if (d && d.units[i]) d.units[i][field] = field === 'count' ? parseInt(value)||0 : value;
-}
-function addUnit(key) {
-  const d = departments.find(x => x.key === key);
-  if (!d) return;
-  if (!d.units) d.units = [];
-  d.units.push({ name:'Yeni Birim', count:0 });
-  selectDeptForEdit(key);
-}
-function removeUnit(key, i) {
-  const d = departments.find(x => x.key === key);
-  if (d) { d.units.splice(i, 1); selectDeptForEdit(key); }
-}
-function updatePersonnel(key, i, field, value) {
-  const d = departments.find(x => x.key === key);
-  if (d && d.personnel[i]) d.personnel[i][field] = value;
-}
-function addPersonnel(key) {
-  const d = departments.find(x => x.key === key);
-  if (!d) return;
-  if (!d.personnel) d.personnel = [];
-  d.personnel.push({ name:'[ İsim ]', rank:'[ Rütbe ]', photo:'' });
-  selectDeptForEdit(key);
-}
-function removePersonnel(key, i) {
-  const d = departments.find(x => x.key === key);
-  if (d) { d.personnel.splice(i, 1); selectDeptForEdit(key); }
-}
-function saveDeptChanges(key) {
-  renderDepartmentTabs();
-  addLog(`"${key.toUpperCase()}" departmanı güncellendi.`);
-  alert('✅ Departman güncellendi!');
-}
-
-// ======================================================
-// FORM TABS
-// ======================================================
-function formTab(id) {
+// ============================================================
+// FORMS
+// ============================================================
+function formTab(id, el) {
   document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('form-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('form-'+id).classList.add('active');
 }
 
-// ======================================================
-// FORM SUBMIT
-// ======================================================
-function submitForm(type) {
-  let data = {};
-  if (type === 'lsb') {
-    data = {
-      oyunAdi: document.getElementById('lsb-oyunadi').value,
-      discord: document.getElementById('lsb-discord').value,
-      gorev: document.getElementById('lsb-gorev').value,
-      sure: document.getElementById('lsb-sure').value,
-      dept: document.getElementById('lsb-dept').value,
-      neden: document.getElementById('lsb-neden').value,
-      deneyim: document.getElementById('lsb-deneyim').value
-    };
-  } else if (type === 'ds') {
-    data = {
-      oyunAdi: document.getElementById('ds-oyunadi').value,
-      discord: document.getElementById('ds-discord').value,
-      dept: document.getElementById('ds-dept').value,
-      tur: document.getElementById('ds-tur').value,
-      aciklama: document.getElementById('ds-aciklama').value
-    };
-  } else if (type === 'lss') {
-    data = {
-      sik: document.getElementById('lss-sik').value,
-      discord: document.getElementById('lss-discord').value,
-      edilen: document.getElementById('lss-edilen').value,
-      tarih: document.getElementById('lss-tarih').value,
-      aciklama: document.getElementById('lss-aciklama').value,
-      kanit: document.getElementById('lss-kanit').value
-    };
-  }
-  const hasData = Object.values(data).some(v => v);
-  if (!hasData) return;
-  data._type = type;
-  data._date = new Date().toLocaleString('tr-TR');
-  submissions[type].push(data);
-  document.getElementById(type + '-form').style.display = 'none';
-  document.getElementById(type + '-success').style.display = 'block';
+async function submitForm(type) {
+  const fields = {
+    lsb: ['lsb-name','lsb-discord','lsb-gorev','lsb-sure','lsb-dept','lsb-why','lsb-exp'],
+    ds:  ['ds-name','ds-discord','ds-dept','ds-tur','ds-aciklama'],
+    lss: ['lss-name','lss-discord','lss-hedef','lss-tarih','lss-aciklama','lss-kanit']
+  };
+  const data = { type, date: new Date().toLocaleString('tr-TR') };
+  let filled = false;
+  (fields[type]||[]).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value) { data[id] = el.value; filled = true; }
+  });
+  if (!filled) return;
+
+  const id = await fsAdd('submissions', data);
+  submissions[type].push({ ...data, id });
+
+  document.getElementById(type+'-form').style.display = 'none';
+  document.getElementById(type+'-success').style.display = 'block';
   updateAdminLists();
   updateFormCount();
 }
 
 function updateFormCount() {
-  let total = submissions.lsb.length + submissions.ds.length + submissions.lss.length;
+  const total = submissions.lsb.length + submissions.ds.length + submissions.lss.length;
   const el = document.getElementById('adash-forms');
   if (el) el.textContent = total;
+  ['lsb','ds','lss'].forEach(t => {
+    const b = document.getElementById('badge-'+t);
+    if (b) b.textContent = submissions[t].length;
+  });
 }
 
 function updateAdminLists() {
   ['lsb','ds','lss'].forEach(type => {
-    const list = document.getElementById('list-' + type);
+    const list = document.getElementById('list-'+type);
     if (!list) return;
-    if (!submissions[type].length) {
-      list.innerHTML = '<div class="empty-state">Henüz kayıt yok.</div>';
-      return;
-    }
-    list.innerHTML = submissions[type].map((s, i) => {
-      const fields = Object.entries(s).filter(([k]) => k !== '_type' && k !== '_date').map(([k,v]) => `<span style="color:var(--gray-light)">${v}</span>`).join(' · ');
-      return `<div class="sub-item">
+    if (!submissions[type].length) { list.innerHTML = '<div class="empty-list">Henüz kayıt yok.</div>'; return; }
+    list.innerHTML = submissions[type].map((s,i) => `
+      <div class="sub-item">
         <div>
           <h4>${typeLabel(type)} #${i+1}</h4>
-          <p>${fields}</p>
-          <div class="sub-meta">${s._date}</div>
-          <button class="action-btn danger" onclick="deleteSubmission('${type}',${i})">Sil</button>
+          <p>${Object.entries(s).filter(([k])=>!['type','date','id'].includes(k)).map(([k,v])=>v).join(' · ')}</p>
+          <div class="sub-meta">${s.date}</div>
+          <button class="action-btn danger" onclick="deleteSubmission('${type}','${s.id}')">Sil</button>
         </div>
         <span class="sub-badge new">Yeni</span>
-      </div>`;
-    }).join('');
+      </div>`).join('');
   });
 }
 
-function deleteSubmission(type, idx) {
-  submissions[type].splice(idx, 1);
+async function deleteSubmission(type, id) {
+  await fsDel('submissions', id);
+  submissions[type] = submissions[type].filter(s => s.id !== id);
   updateAdminLists();
   updateFormCount();
-  addLog(`${typeLabel(type)} #${idx+1} silindi.`);
+  logActivity('Form silindi: ' + type);
+}
+
+function exportForms(type) {
+  if (!submissions[type].length) { alert('Dışa aktarılacak kayıt yok.'); return; }
+  const text = submissions[type].map((s,i) =>
+    `=== ${typeLabel(type)} #${i+1} ===\n` +
+    Object.entries(s).filter(([k])=>!['type','id'].includes(k)).map(([k,v])=>`${k}: ${v}`).join('\n')
+  ).join('\n\n');
+  const blob = new Blob([text], { type:'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = type + '_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
 }
 
 function typeLabel(t) {
-  return { lsb:'Sup Başvurusu', ds:'Dept Şikayeti', lss:'Sup Şikayeti' }[t] || t;
+  return { lsb:'Sup Başvurusu', ds:'Dept Şikayeti', lss:'Sup Şikayeti' }[t]||t;
 }
 
-// EXPORT
-function exportSubmissions(type) {
-  if (!submissions[type].length) { alert('Dışa aktarılacak kayıt yok.'); return; }
-  const text = submissions[type].map((s, i) => {
-    const lines = [`=== ${typeLabel(type)} #${i+1} — ${s._date} ===`];
-    Object.entries(s).filter(([k]) => k !== '_type' && k !== '_date').forEach(([k,v]) => lines.push(`${k}: ${v}`));
-    return lines.join('\n');
-  }).join('\n\n');
-  navigator.clipboard.writeText(text).then(() => alert('✅ Metin panoya kopyalandı!')).catch(() => alert(text));
-  addLog(`${typeLabel(type)} listesi dışa aktarıldı.`);
-}
-
-// Populate dept selects in forms
-function populateDeptSelects() {
-  ['lsb-dept','ds-dept'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const current = sel.value;
-    while (sel.options.length > 1) sel.remove(1);
-    departments.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.short;
-      opt.textContent = d.short + ' — ' + d.name;
-      sel.appendChild(opt);
-    });
-    sel.value = current;
-  });
-}
-
-// ======================================================
-// DRIVE / KURALLAR
-// ======================================================
-function saveDriveLinks() {
-  driveLinks.rules = document.getElementById('rules-url-input').value.trim();
-  driveLinks.ceza = document.getElementById('ceza-url-input').value.trim();
-  renderDriveButtons();
-  localStorage.setItem('jl_drive_rules', driveLinks.rules);
-  localStorage.setItem('jl_drive_ceza', driveLinks.ceza);
-  addLog('Kurallar/Drive linkleri güncellendi.');
-  alert('✅ Linkler kaydedildi!');
-}
-function loadDriveLinks() {
-  driveLinks.rules = localStorage.getItem('jl_drive_rules') || '';
-  driveLinks.ceza = localStorage.getItem('jl_drive_ceza') || '';
-  if (driveLinks.rules) document.getElementById('rules-url-input').value = driveLinks.rules;
-  if (driveLinks.ceza) document.getElementById('ceza-url-input').value = driveLinks.ceza;
-  renderDriveButtons();
-}
-function renderDriveButtons() {
-  const rw = document.getElementById('rules-btn-wrap');
-  const cw = document.getElementById('ceza-btn-wrap');
-  if (rw) rw.innerHTML = driveLinks.rules ? `<a class="open-doc-btn" href="${driveLinks.rules}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2L2 19h20L12 2z"/></svg> Belgeyi Aç</a>` : '<span style="font-size:0.8rem;color:var(--gray);">Doküman henüz yüklenmedi.</span>';
-  if (cw) cw.innerHTML = driveLinks.ceza ? `<a class="open-doc-btn" href="${driveLinks.ceza}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2L2 19h20L12 2z"/></svg> Belgeyi Aç</a>` : '<span style="font-size:0.8rem;color:var(--gray);">Doküman henüz yüklenmedi.</span>';
-}
-
-// ======================================================
-// ADMIN
-// ======================================================
+// ============================================================
+// ADMIN LOGIN
+// ============================================================
 function adminLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value;
-  const acc = accounts.find(a => a.user === u && a.pass === p);
+  const acc = accounts.find(a => a.user===u && a.pass===p);
   if (acc) {
-    currentAdmin = acc;
+    currentUser = acc;
     document.getElementById('admin-login').style.display = 'none';
     document.getElementById('admin-dash').classList.add('shown');
     document.getElementById('welcome-name').textContent = acc.name;
+    document.getElementById('last-login').textContent = new Date().toLocaleString('tr-TR');
     document.getElementById('login-err').style.display = 'none';
-    renderAccounts();
-    renderAdminDeptSelector();
     updateAdminLists();
     updateFormCount();
-    renderActivityLog();
-    addLog(`${acc.name} giriş yaptı.`);
+    renderWeekArchiveAdmin();
+    renderGaleri();
+    renderAnnouncements();
+    renderRules();
+    logActivity('Giriş yapıldı: ' + acc.name);
   } else {
     document.getElementById('login-err').style.display = 'block';
   }
 }
-document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') adminLogin(); });
 
 function adminLogout() {
-  if (currentAdmin) addLog(`${currentAdmin.name} çıkış yaptı.`);
-  currentAdmin = null;
+  if (currentUser) logActivity('Çıkış yapıldı: ' + currentUser.name);
+  currentUser = null;
   document.getElementById('admin-login').style.display = 'flex';
   document.getElementById('admin-dash').classList.remove('shown');
   document.getElementById('login-user').value = '';
@@ -522,154 +795,103 @@ function adminLogout() {
 function adminSection(id, el) {
   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-  document.getElementById('asec-' + id).classList.add('active');
+  const sec = document.getElementById('asec-'+id);
+  if (sec) sec.classList.add('active');
   if (el) el.classList.add('active');
-  if (id === 'dept-editor') { renderAdminDeptSelector(); }
 }
 
+// ============================================================
 // ACCOUNTS
-function createAccount() {
-  const u = document.getElementById('new-user').value.trim();
-  const p = document.getElementById('new-pass').value;
-  const r = document.getElementById('new-role').value;
-  const n = document.getElementById('new-name').value.trim();
-  if (!u || !p || !n) return;
-  if (accounts.find(a => a.user === u)) { alert('Bu kullanıcı adı zaten mevcut.'); return; }
-  accounts.push({ user:u, pass:p, role:r, name:n });
-  renderAccounts();
-  addLog(`Yeni hesap oluşturuldu: ${n} (${r})`);
-  document.getElementById('acc-msg').style.display = 'block';
-  setTimeout(() => document.getElementById('acc-msg').style.display = 'none', 3000);
-  ['new-user','new-pass','new-name'].forEach(id => document.getElementById(id).value = '');
-}
+// ============================================================
 function renderAccounts() {
   const grid = document.getElementById('accounts-grid');
-  grid.innerHTML = accounts.map((a, i) => `
+  if (!grid) return;
+  grid.innerHTML = accounts.map((a,i) => `
     <div class="account-card">
       <div class="ac-name">${a.name}</div>
       <div class="ac-role ${a.role==='manager'?'ac-manager':'ac-sup'}">${a.role==='manager'?'Legal Manager':'Legal Sup'}</div>
       <p>@${a.user}</p>
-      ${i===0 ? '<button class="action-btn" disabled>Silinemez</button>' : `<button class="action-btn danger" onclick="deleteAccount(${i})">Sil</button>`}
+      ${i===0?`<button class="action-btn" disabled>Silinemez</button>`:`<button class="action-btn danger" onclick="deleteAccount(${i})">Sil</button>`}
     </div>`).join('');
 }
-function deleteAccount(i) {
-  addLog(`Hesap silindi: ${accounts[i].name}`);
-  accounts.splice(i, 1);
+
+async function createAccount() {
+  const u = document.getElementById('new-user').value.trim();
+  const p = document.getElementById('new-pass').value;
+  const r = document.getElementById('new-role').value;
+  const n = document.getElementById('new-name').value.trim();
+  if (!u||!p||!n) return;
+  accounts.push({ user:u, pass:p, role:r, name:n });
+  await fsSet('site/accounts', { list: accounts });
+  renderAccounts();
+  document.getElementById('acc-msg').style.display = 'block';
+  setTimeout(()=>{ document.getElementById('acc-msg').style.display='none'; }, 3000);
+  document.getElementById('new-user').value='';
+  document.getElementById('new-pass').value='';
+  document.getElementById('new-name').value='';
+  logActivity('Yeni hesap oluşturuldu: ' + n);
+}
+
+async function deleteAccount(i) {
+  logActivity('Hesap silindi: ' + accounts[i].name);
+  accounts.splice(i,1);
+  await fsSet('site/accounts', { list: accounts });
   renderAccounts();
 }
 
-// PASSWORD CHANGE
-function changePassword() {
-  const oldPass = document.getElementById('cp-old').value;
-  const newPass = document.getElementById('cp-new').value;
-  const msg = document.getElementById('cp-msg');
-  if (!currentAdmin) return;
-  if (currentAdmin.pass !== oldPass) {
-    msg.style.display = 'block'; msg.style.color = 'var(--danger)'; msg.textContent = 'Mevcut şifre hatalı.'; return;
-  }
-  if (!newPass || newPass.length < 4) {
-    msg.style.display = 'block'; msg.style.color = 'var(--danger)'; msg.textContent = 'Yeni şifre en az 4 karakter olmalı.'; return;
-  }
-  const acc = accounts.find(a => a.user === currentAdmin.user);
-  if (acc) { acc.pass = newPass; currentAdmin.pass = newPass; }
-  msg.style.display = 'block'; msg.style.color = 'var(--success)'; msg.textContent = '✅ Şifre değiştirildi.';
-  document.getElementById('cp-old').value = '';
-  document.getElementById('cp-new').value = '';
-  addLog('Şifre değiştirildi.');
-  setTimeout(() => msg.style.display = 'none', 3000);
+// ============================================================
+// ŞİFRE DEĞİŞTİR
+// ============================================================
+async function changePassword() {
+  const old = document.getElementById('pw-old').value;
+  const n1 = document.getElementById('pw-new').value;
+  const n2 = document.getElementById('pw-new2').value;
+  const msg = document.getElementById('pw-msg');
+  if (!currentUser) return;
+  if (old !== currentUser.pass) { msg.style.display='block'; msg.style.color='#E74C3C'; msg.textContent='Mevcut şifre hatalı.'; return; }
+  if (n1 !== n2) { msg.style.display='block'; msg.style.color='#E74C3C'; msg.textContent='Yeni şifreler eşleşmiyor.'; return; }
+  if (n1.length < 6) { msg.style.display='block'; msg.style.color='#E74C3C'; msg.textContent='Şifre en az 6 karakter olmalı.'; return; }
+  const idx = accounts.findIndex(a => a.user === currentUser.user);
+  if (idx >= 0) { accounts[idx].pass = n1; currentUser.pass = n1; }
+  await fsSet('site/accounts', { list: accounts });
+  msg.style.display='block'; msg.style.color='#27AE60'; msg.textContent='Şifre başarıyla değiştirildi!';
+  document.getElementById('pw-old').value='';
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-new2').value='';
+  logActivity('Şifre değiştirildi: ' + currentUser.name);
 }
 
-// ======================================================
-// WEEK (HAFTA)
-// ======================================================
-function saveWeek() {
-  const name = document.getElementById('we-name').value || '[ İsim ]';
-  const role = document.getElementById('we-role').value || '[ Görev ]';
-  const tenure = document.getElementById('we-tenure').value || '—';
-  const msg = document.getElementById('we-msg').value || 'Tebrikler!';
-  const num = document.getElementById('we-num').value || 'Hafta #1';
-  const photo = document.getElementById('we-photo').value || '';
-
-  // Archive current before overwriting
-  const curName = document.getElementById('week-name').textContent;
-  const curRole = document.getElementById('week-role').textContent;
-  const curNum = document.getElementById('week-num-display').textContent;
-  if (curName && curName !== '[ İsim Soyisim ]') {
-    weekHistory.unshift({ name: curName, role: curRole, num: curNum, date: new Date().toLocaleDateString('tr-TR') });
-    renderWeekArchive();
-  }
-
-  document.getElementById('week-name').textContent = name;
-  document.getElementById('week-role').textContent = role;
-  document.getElementById('week-tenure').textContent = 'Görev Süreci: ' + tenure;
-  document.getElementById('week-msg').textContent = msg;
-  document.getElementById('week-num-display').textContent = num;
-
-  const photoInner = document.getElementById('week-photo-inner');
-  if (photo) {
-    photoInner.innerHTML = `<img src="${photo}" alt="${name}" style="width:100%;height:100%;object-fit:cover;" />`;
-  } else {
-    photoInner.innerHTML = `<div class="week-photo-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;">Fotoğraf</span></div>`;
-  }
-
-  addLog(`Haftanın memuru güncellendi: ${name}`);
-  alert('✅ Haftanın memuru güncellendi!');
+// ============================================================
+// AKTİVİTE LOGU
+// ============================================================
+async function logActivity(msg) {
+  const entry = { msg, user: currentUser?.name || 'Sistem', time: new Date().toLocaleString('tr-TR') };
+  activityLog.unshift(entry);
+  if (activityLog.length > 50) activityLog = activityLog.slice(0,50);
+  await fsSet('site/activityLog', { log: activityLog });
+  renderActivityLogList();
 }
 
-function renderWeekArchive() {
-  const arc = document.getElementById('week-archive');
-  const list = document.getElementById('archive-list');
-  if (!weekHistory.length) { arc.style.display = 'none'; return; }
-  arc.style.display = 'block';
-  list.innerHTML = weekHistory.map(w => `
-    <div class="archive-item">
-      <span class="arch-week">${w.num}</span>
-      <div><div class="arch-name">${w.name}</div><div class="arch-role">${w.role}</div></div>
+function renderActivityLogList() {
+  const el = document.getElementById('activity-log-list');
+  if (!el) return;
+  if (!activityLog.length) { el.innerHTML = '<div class="empty-list">Log boş.</div>'; return; }
+  el.innerHTML = activityLog.map(l => `
+    <div class="log-item">
+      <div class="log-msg">${l.msg}</div>
+      <div class="log-meta">${l.user} · ${l.time}</div>
     </div>`).join('');
 }
 
-// ======================================================
-// STATS
-// ======================================================
-function saveStats() {
-  const p = document.getElementById('se-personel').value;
-  const b = document.getElementById('se-birim').value;
-  const d = document.getElementById('se-dept').value;
-  if (p) { document.getElementById('stat-personel').textContent = p; document.getElementById('adash-personel').textContent = p; }
-  if (b) { document.getElementById('stat-birim').textContent = b; document.getElementById('adash-birim').textContent = b; }
-  if (d) { document.getElementById('stat-dept').textContent = d; document.getElementById('adash-dept').textContent = d; }
-  addLog(`İstatistikler güncellendi: Personel=${p||'-'}, Birim=${b||'-'}, Dept=${d||'-'}`);
-  alert('✅ İstatistikler güncellendi!');
+async function clearLog() {
+  activityLog = [];
+  await fsSet('site/activityLog', { log: [] });
+  renderActivityLogList();
 }
 
-// ======================================================
-// ACTIVITY LOG
-// ======================================================
-function addLog(msg) {
-  const time = new Date().toLocaleString('tr-TR');
-  const user = currentAdmin ? currentAdmin.name : 'Misafir';
-  activityLog.unshift({ user, msg, time });
-  if (activityLog.length > 200) activityLog.pop();
-  renderActivityLog();
-}
-function renderActivityLog() {
-  const list = document.getElementById('activity-list');
-  if (!list) return;
-  if (!activityLog.length) { list.innerHTML = '<div class="empty-state">Henüz aktivite yok.</div>'; return; }
-  list.innerHTML = `<div class="submissions-list" style="background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.08);border-radius:8px;overflow:hidden;">${activityLog.map(l=>`<div class="log-item"><span class="log-time">${l.time}</span><span class="log-msg"><span class="log-user">${l.user}:</span> ${l.msg}</span></div>`).join('')}</div>`;
-}
-function clearLog() {
-  if (confirm('Aktivite logu temizlensin mi?')) { activityLog = []; renderActivityLog(); }
-}
-
-// ======================================================
-// INIT
-// ======================================================
-document.addEventListener('DOMContentLoaded', function() {
-  initTheme();
-  initVisitor();
-  renderDepartmentTabs();
-  populateDeptSelects();
-  loadAnnouncement();
-  loadDriveLinks();
+// ============================================================
+// START
+// ============================================================
+initApp().then(() => {
+  renderAccounts();
 });
