@@ -895,3 +895,39 @@ async function clearLog() {
 initApp().then(() => {
   renderAccounts();
 });
+
+// ============================================================
+// GLOBAL EXPORTS — onclick'ler için window'a bağla
+// ============================================================
+window.goPage = goPage;
+window.toggleMobileNav = toggleMobileNav;
+window.closeMobileNav = closeMobileNav;
+window.toggleTheme = toggleTheme;
+window.openSearch = openSearch;
+window.closeSearch = closeSearch;
+window.doSearch = doSearch;
+window.closeAnn = closeAnn;
+window.saveAnnouncement = saveAnnouncement;
+window.toggleAnn = toggleAnn;
+window.deleteAnn = deleteAnn;
+window.addGaleriPhoto = addGaleriPhoto;
+window.deleteGaleriPhoto = deleteGaleriPhoto;
+window.fandomTab = fandomTab;
+window.loadDeptEditor = loadDeptEditor;
+window.addUnit = addUnit;
+window.removeUnit = removeUnit;
+window.saveDeptData = saveDeptData;
+window.saveRulesUrl = saveRulesUrl;
+window.saveStats = saveStats;
+window.saveWeek = saveWeek;
+window.formTab = formTab;
+window.submitForm = submitForm;
+window.deleteSubmission = deleteSubmission;
+window.exportForms = exportForms;
+window.adminLogin = adminLogin;
+window.adminLogout = adminLogout;
+window.adminSection = adminSection;
+window.createAccount = createAccount;
+window.deleteAccount = deleteAccount;
+window.changePassword = changePassword;
+window.clearLog = clearLog;
